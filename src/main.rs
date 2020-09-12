@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use tide::{
     http::headers::HeaderValue, security::CorsMiddleware, security::Origin, Request, Response,
 };
@@ -30,8 +32,12 @@ async fn main() {
         .at("/get/*url")
         .get(|req: Request<()>| async move {
             let url: String = req.param("url")?;
-            tide::log::info!("url: {}", url);
-            let mut resp = surf::get(url).await.map_err(|e| anyhow::anyhow!(e))?;
+            let query: HashMap<String, String> = req.query()?;
+            tide::log::info!("url: {}, queries: {:#?}", url, query);
+            let mut resp = surf::get(url)
+                .set_query(&query)?
+                .await
+                .map_err(|e| anyhow::anyhow!(e))?;
             let headers = resp
                 .headers()
                 .iter()
